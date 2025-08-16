@@ -1,16 +1,16 @@
-#import os, sys; sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+# import os, sys; sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 """Extended Modbus Class"""
 
 import logging
 import operator
-#from datetime import timedelta, datetime
+# from datetime import timedelta, datetime
 from typing import Optional, Literal
 import struct
 import asyncio
 
 from pymodbus.client import AsyncModbusTcpClient
-from pymodbus.utilities import unpack_bitstring
+from pymodbus.pdu.pdu import unpack_bitstring
 from pymodbus.exceptions import ModbusIOException, ConnectionException
 from pymodbus import ExceptionResponse
 
@@ -25,9 +25,9 @@ class ExtModbusClient:
         self._unit_id = unit_id
         self.busy = False
         if not framer is None:
-            self._client = AsyncModbusTcpClient(host=host, port=port, framer=framer, timeout=timeout) 
+            self._client = AsyncModbusTcpClient(host=host, port=port, framer=framer, timeout=timeout)
         else:
-            self._client = AsyncModbusTcpClient(host=host, port=port, timeout=timeout) 
+            self._client = AsyncModbusTcpClient(host=host, port=port, timeout=timeout)
 
     def close(self):
         """Disconnect client."""
@@ -35,7 +35,7 @@ class ExtModbusClient:
 
     async def connect(self, retries = 3):
         """Connect client."""
-        for attempts in range(retries): 
+        for attempts in range(retries):
             if attempts > 0:
                 _LOGGER.debug(f"Connect retry attempt: {attempts}/{retries} connecting to: {self._host}:{self._port}")
                 await asyncio.sleep(.2)
@@ -47,7 +47,7 @@ class ExtModbusClient:
             raise Exception(f"Failed to connect to {self._host}:{self._port} retries: {retries}")
         _LOGGER.debug("successfully connected to %s:%s", self._client.comm_params.host, self._client.comm_params.port)
         return True
-    
+
     async def _check_and_reconnect(self):
         if not self._client.connected:
             _LOGGER.warning("Modbus client is not connected, reconnecting...", exc_info=True)
@@ -97,7 +97,7 @@ class ExtModbusClient:
                     _LOGGER.debug(f"Exception response reading register retries: {attempt}/{retries} connected {self._client.connected} address: {address} count: {count} unit id: {unit_id}  {data}")
                 else:
                     _LOGGER.debug(f"Unknown data response error reading register retries: {attempt}/{retries} connected {self._client.connected} address: {address} count: {count} unit id: {unit_id}  {data}")
-                await asyncio.sleep(.2) 
+                await asyncio.sleep(.2)
 
         if data.isError():
             _LOGGER.error(f"error reading registers. retries: {attempt}/{retries} connected {self._client.connected} register: {address} count: {count} unit id: {unit_id} retries {retries} error: {data} ")
@@ -135,7 +135,7 @@ class ExtModbusClient:
 
         if result.isError():
             raise Exception(f'write_registers: data error {self._client.connected} {type(result)} {result} ')
-    
+
         #_LOGGER.debug(f'write result {type(result)} {result}')
         return result
 
@@ -199,8 +199,8 @@ class ExtModbusClient:
         if not v is None:
             return v
         return f'{default}'
-    
-    def convert_from_byte_uint16(self, byteArray, pos, type='BE'): 
+
+    def convert_from_byte_uint16(self, byteArray, pos, type='BE'):
         try:
             if type == 'BE':
                 result = byteArray[pos] * 256 + byteArray[pos + 1]
@@ -210,7 +210,7 @@ class ExtModbusClient:
           return 0
         return result
 
-    def convert_from_byte_int16(self, byteArray, pos, type='BE'): 
+    def convert_from_byte_int16(self, byteArray, pos, type='BE'):
         try:
             if type == 'BE':
                 result = byteArray[pos] * 256 + byteArray[pos + 1]
@@ -227,7 +227,7 @@ class ExtModbusClient:
         len_list = len(bitmask_list)
         for bit in range(bits):
             if bitmask & (1<<bit):
-                if bit < len_list: 
+                if bit < len_list:
                     value = bitmask_list[bit]
                 else:
                     value = f'bit {bit} undefined'
@@ -237,7 +237,7 @@ class ExtModbusClient:
     def bitmask_to_string(self, bitmask, bitmask_list, default='NA', max_length=255, bits=16):
         strings = self.bitmask_to_strings(bitmask = bitmask, bitmask_list = bitmask_list, bits = bits)
         return self.strings_to_string(strings=strings, default=default, max_length=max_length)
-    
+
     def strings_to_string(self, strings, default='NA', max_length=255):
         if len(strings):
             return ','.join(strings)[:max_length]
@@ -251,7 +251,7 @@ class ExtModbusClient:
                 return None
             if not upper_bound is None and rvalue > upper_bound:
                 _LOGGER.error(f'calculated value: {rvalue} above upper bound {upper_bound} value: {value} sf: {sf} digits {digits}', stack_info=True)
-                return None                    
+                return None
             return round(value * 10**sf, digits)
         else:
             _LOGGER.debug(f'cannot calculate non numeric value: {value} sf: {sf} digits {digits}', stack_info=True)
